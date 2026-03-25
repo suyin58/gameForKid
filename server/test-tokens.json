@@ -1,0 +1,12 @@
+{
+  "user1": {
+    "userId": 1001,
+    "openid": "test_user_1",
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEwMDEsIm9wZW5pZCI6InRlc3RfdXNlcl8xIiwiaWF0IjoxNzc0Mzk2Mjg5LCJleHAiOjE3NzY5ODgyODl9.x-bkLQ7Yj99HcenwBecDOesKfVwvTQ-9rTtxYCSIXEM"
+  },
+  "user2": {
+    "userId": 1002,
+    "openid": "test_user_2",
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEwMDIsIm9wZW5pZCI6InRlc3RfdXNlcl8yIiwiaWF0IjoxNzc0Mzk2Mjg5LCJleHAiOjE3NzY5ODgyODl9.1DhOvkZE_2R5BOhh9F0bwNtlZ3ZRrVpcMmU9q762Zes"
+  }
+}

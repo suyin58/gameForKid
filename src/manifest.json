@@ -1,0 +1,40 @@
+{
+  "name": "儿童游戏创作工坊",
+  "appid": "__UNI__KIDS_GAME",
+  "description": "让不会编程的孩子也能创作游戏",
+  "versionName": "1.0.0",
+  "versionCode": "100",
+  "transformPx": false,
+  "mp-weixin": {
+    "appid": "",
+    "setting": {
+      "urlCheck": false,
+      "es6": true,
+      "postcss": true,
+      "minified": true
+    },
+    "usingComponents": true,
+    "permission": {
+      "scope.userLocation": {
+        "desc": "你的位置信息将用于小程序位置接口的效果展示"
+      }
+    },
+    "requiredPrivateInfos": [
+      "getLocation",
+      "startRecord",
+      "translateVoice"
+    ]
+  },
+  "h5": {
+    "title": "儿童游戏创作工坊",
+    "domain": "",
+    "router": {
+      "mode": "hash",
+      "base": "./"
+    }
+  },
+  "uniStatistics": {
+    "enable": false
+  },
+  "vueVersion": "3"
+}

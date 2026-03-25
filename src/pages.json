@@ -1,0 +1,63 @@
+{
+  "pages": [
+    {
+      "path": "pages/index/index",
+      "style": {
+        "navigationBarTitleText": "我的作品",
+        "enablePullDownRefresh": true
+      }
+    },
+    {
+      "path": "pages/create/index",
+      "style": {
+        "navigationBarTitleText": "创作游戏"
+      }
+    },
+    {
+      "path": "pages/square/index",
+      "style": {
+        "navigationBarTitleText": "游戏广场",
+        "enablePullDownRefresh": true
+      }
+    },
+    {
+      "path": "pages/play/index",
+      "style": {
+        "navigationBarTitleText": "试玩游戏"
+      }
+    },
+    {
+      "path": "pages/publish/index",
+      "style": {
+        "navigationBarTitleText": "发布游戏"
+      }
+    }
+  ],
+  "globalStyle": {
+    "navigationBarTextStyle": "black",
+    "navigationBarTitleText": "儿童游戏创作工坊",
+    "navigationBarBackgroundColor": "#FFFFFF",
+    "backgroundColor": "#F5F5F5"
+  },
+  "tabBar": {
+    "color": "#7A7E83",
+    "selectedColor": "#3cc51f",
+    "borderStyle": "black",
+    "backgroundColor": "#ffffff",
+    "list": [
+      {
+        "pagePath": "pages/index/index",
+        "iconPath": "static/tab-home.png",
+        "selectedIconPath": "static/tab-home-active.png",
+        "text": "我的作品"
+      },
+      {
+        "pagePath": "pages/square/index",
+        "iconPath": "static/tab-square.png",
+        "selectedIconPath": "static/tab-square-active.png",
+        "text": "游戏广场"
+      }
+    ]
+  },
+  "uniIdRouter": {}
+}
