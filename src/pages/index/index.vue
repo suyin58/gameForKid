@@ -1,5 +1,11 @@
 <template>
   <view class="page">
+    <!-- 顶部状态栏 -->
+    <view class="status-bar">
+      <text class="status-item">✨ 演示模式</text>
+      <text class="status-item">后端服务: <text class="status-ok">运行中</text></text>
+    </view>
+
     <!-- 顶部标题区域 -->
     <view class="header-section">
       <view class="user-info">
@@ -41,7 +47,12 @@
             </view>
           </view>
           <view class="game-card-content">
-            <text class="game-card-title">{{ game.title }}</text>
+            <view class="game-header">
+              <text class="game-card-title">{{ game.title }}</text>
+              <view class="game-badge" :class="game.isPublic ? 'public' : 'private'">
+                {{ game.isPublic ? '公开' : '私密' }}
+              </view>
+            </view>
             <text class="game-card-desc">{{ game.description }}</text>
             <view class="game-card-stats">
               <text class="stat-item">
@@ -50,9 +61,8 @@
               </text>
               <text class="stat-item">
                 <text class="stat-icon">🎮</text>
-                {{ game.plays }} 次游玩
+                {{ game.plays }}
               </text>
-              <text class="stat-item">{{ formatDate(game.createdAt) }}</text>
             </view>
           </view>
         </view>
@@ -80,7 +90,7 @@ const games = ref([
     icon: '🚀',
     likes: 12,
     plays: 45,
-    createdAt: '2026-03-25'
+    isPublic: true
   },
   {
     id: 2,
@@ -89,7 +99,7 @@ const games = ref([
     icon: '🌲',
     likes: 8,
     plays: 23,
-    createdAt: '2026-03-26'
+    isPublic: false
   }
 ])
 
@@ -106,14 +116,6 @@ const goToPlay = (game) => {
     url: `/pages/play/index?id=${game.id}&title=${game.title}`
   })
 }
-
-// 格式化日期
-const formatDate = (dateStr) => {
-  const date = new Date(dateStr)
-  const month = date.getMonth() + 1
-  const day = date.getDate()
-  return `${month}月${day}日`
-}
 </script>
 
 <style lang="scss" scoped>
@@ -121,6 +123,28 @@ const formatDate = (dateStr) => {
   min-height: 100vh;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   padding-bottom: 80px;
+}
+
+.status-bar {
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  padding: 10px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  color: white;
+}
+
+.status-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.status-ok {
+  color: #4CAF50;
+  font-weight: bold;
 }
 
 .header-section {
@@ -285,12 +309,37 @@ const formatDate = (dateStr) => {
   padding: 15px;
 }
 
+.game-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 5px;
+}
+
 .game-card-title {
   display: block;
   font-size: 16px;
   font-weight: bold;
   color: #333;
-  margin-bottom: 5px;
+  flex: 1;
+}
+
+.game-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 500;
+  color: white;
+  flex-shrink: 0;
+}
+
+.game-badge.public {
+  background: #4CAF50;
+}
+
+.game-badge.private {
+  background: #999;
 }
 
 .game-card-desc {

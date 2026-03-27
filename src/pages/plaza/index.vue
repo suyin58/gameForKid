@@ -72,6 +72,10 @@
                 {{ game.author }}
               </text>
               <text class="stat-item">
+                <text class="stat-icon">❤️</text>
+                {{ game.likes }}
+              </text>
+              <text class="stat-item">
                 <text class="stat-icon">🎮</text>
                 {{ game.plays }}
               </text>

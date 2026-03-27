@@ -18,9 +18,6 @@
           </text>
         </view>
       </view>
-      <view class="action-btn" @click="toggleLike">
-        <text :class="{ liked: isLiked }">{{ isLiked ? '❤️' : '🤍' }}</text>
-      </view>
     </view>
 
     <!-- 游戏容器 -->
@@ -36,17 +33,17 @@
 
     <!-- 底部操作栏 -->
     <view class="bottom-bar">
-      <button class="bottom-btn" @click="shareGame">
+      <button class="bottom-btn like" @click="toggleLike">
+        <text class="btn-icon">{{ isLiked ? '❤️' : '🤍' }}</text>
+        <text class="btn-text">{{ isLiked ? '已点赞' : '点赞' }}</text>
+      </button>
+      <button class="bottom-btn share" @click="shareGame">
         <text class="btn-icon">📤</text>
         <text class="btn-text">分享</text>
       </button>
-      <button class="bottom-btn" @click="cloneGame">
+      <button class="bottom-btn clone" @click="cloneGame">
         <text class="btn-icon">📋</text>
         <text class="btn-text">克隆</text>
-      </button>
-      <button class="bottom-btn primary" @click="viewAuthor">
-        <text class="btn-icon">👤</text>
-        <text class="btn-text">作者</text>
       </button>
     </view>
   </view>
@@ -219,33 +216,6 @@ const viewAuthor = () => {
   font-size: 14px;
 }
 
-.action-btn {
-  width: 50px;
-  height: 50px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 28px;
-  background: #f5f5f5;
-  border-radius: 50%;
-}
-
-.action-btn .liked {
-  animation: heartBeat 0.3s ease;
-}
-
-@keyframes heartBeat {
-  0% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.3);
-  }
-  100% {
-    transform: scale(1);
-  }
-}
-
 .game-container {
   flex: 1;
   background: white;
@@ -310,16 +280,31 @@ const viewAuthor = () => {
   justify-content: center;
   gap: 5px;
   padding: 10px;
-  background: #f5f5f5;
   border: none;
   border-radius: 10px;
   font-size: 13px;
-  color: #666;
+  color: white;
+  transition: transform 0.2s;
 }
 
-.bottom-btn.primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+.bottom-btn:active {
+  transform: scale(0.95);
+}
+
+.bottom-btn.like {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.bottom-btn.like.liked {
+  background: #ff6b6b;
+}
+
+.bottom-btn.share {
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+
+.bottom-btn.clone {
+  background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
 }
 
 .btn-icon {
