@@ -3,75 +3,32 @@
     {
       "path": "pages/index/index",
       "style": {
-        "navigationBarTitleText": "我的作品",
-        "navigationBarBackgroundColor": "#FF6B6B",
-        "navigationBarTextStyle": "white"
+        "navigationBarTitleText": "我的作品"
       }
     },
     {
       "path": "pages/create/index",
       "style": {
-        "navigationBarTitleText": "创作游戏",
-        "navigationBarBackgroundColor": "#FF6B6B",
-        "navigationBarTextStyle": "white"
+        "navigationBarTitleText": "创作游戏"
       }
     },
     {
       "path": "pages/plaza/index",
       "style": {
-        "navigationBarTitleText": "游戏广场",
-        "navigationBarBackgroundColor": "#FF6B6B",
-        "navigationBarTextStyle": "white"
+        "navigationBarTitleText": "游戏广场"
       }
     },
     {
       "path": "pages/play/index",
       "style": {
-        "navigationBarTitleText": "试玩游戏",
-        "navigationBarBackgroundColor": "#FF6B6B",
-        "navigationBarTextStyle": "white"
-      }
-    },
-    {
-      "path": "pages/publish/index",
-      "style": {
-        "navigationBarTitleText": "发布游戏",
-        "navigationBarBackgroundColor": "#FF6B6B",
-        "navigationBarTextStyle": "white"
+        "navigationBarTitleText": "试玩游戏"
       }
     }
   ],
   "globalStyle": {
-    "navigationBarTextStyle": "white",
+    "navigationBarTextStyle": "black",
     "navigationBarTitleText": "儿童AI游戏创作平台",
-    "navigationBarBackgroundColor": "#FF6B6B",
+    "navigationBarBackgroundColor": "#FFFFFF",
     "backgroundColor": "#F5F5F5"
-  },
-  "tabBar": {
-    "color": "#999999",
-    "selectedColor": "#FF6B6B",
-    "backgroundColor": "#FFFFFF",
-    "borderStyle": "black",
-    "list": [
-      {
-        "pagePath": "pages/index/index",
-        "text": "我的",
-        "iconPath": "static/tabbar/home.png",
-        "selectedIconPath": "static/tabbar/home-active.png"
-      },
-      {
-        "pagePath": "pages/create/index",
-        "text": "创作",
-        "iconPath": "static/tabbar/create.png",
-        "selectedIconPath": "static/tabbar/create-active.png"
-      },
-      {
-        "pagePath": "pages/plaza/index",
-        "text": "广场",
-        "iconPath": "static/tabbar/plaza.png",
-        "selectedIconPath": "static/tabbar/plaza-active.png"
-      }
-    ]
-  },
-  "uniIdRouter": {}
+  }
 }

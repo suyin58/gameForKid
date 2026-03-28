@@ -1,98 +1,82 @@
 <template>
   <view class="page">
-    <!-- 预览区域 -->
-    <view class="preview-section">
-      <view class="preview-header">
-        <text class="preview-title">游戏预览</text>
-        <view class="preview-status">
-          <text class="status-text">{{ statusText }}</text>
+    <!-- 游戏预览区 -->
+    <view class="preview-section card">
+      <view class="preview-header flex-between">
+        <text class="preview-title">🎮 游戏预览</text>
+        <view class="preview-status" :class="statusClass">
+          {{ previewStatus }}
         </view>
       </view>
 
-      <view class="game-thumbnail-preview-large" :class="{ generating: isGenerating }">
-        <!-- 生成中状态 -->
-        <view v-if="isGenerating" class="stream-output">
+      <!-- 预览缩略图 -->
+      <view
+        class="preview-thumbnail"
+        :class="{ 'generating': isGenerating }"
+        :style="{ background: previewBg }"
+      >
+        <!-- 生成中的 stream 输出 -->
+        <scroll-view
+          v-if="isGenerating"
+          class="stream-output"
+          scroll-y
+          :scroll-top="scrollTop"
+        >
           <view
             v-for="(line, index) in streamLines"
             :key="index"
             class="stream-line"
-            :class="line.type"
+            :class="'line-' + line.type"
           >
             {{ line.text }}
           </view>
-          <text v-if="isGenerating" class="cursor"></text>
-        </view>
+          <view v-if="showCursor" class="cursor"></view>
+        </scroll-view>
 
-        <!-- 初始状态 -->
-        <view v-else-if="!generatedGame" class="game-thumbnail-content">
-          <text class="game-scene-large">🎮</text>
-          <text class="game-title-large">开始创作吧</text>
-          <text class="game-hint-large">描述你想要的游戏，AI 会帮你生成</text>
-        </view>
-
-        <!-- 生成完成状态 -->
-        <view v-else class="game-thumbnail-content">
-          <text class="game-scene-large">{{ generatedGame.icon }}</text>
-          <text class="game-title-large">{{ generatedGame.title }}</text>
-          <text class="game-hint-large">{{ generatedGame.description }}</text>
+        <!-- 普通预览 -->
+        <view v-else class="preview-content flex-center flex-column">
+          <text class="preview-title-large">{{ previewTitle }}</text>
+          <text class="preview-icon">🎮</text>
+          <text class="preview-hint">{{ previewHint }}</text>
         </view>
       </view>
     </view>
 
     <!-- 输入区域 -->
-    <view class="input-section-chat">
-      <view class="input-header">
-        <text class="input-title">描述你的游戏</text>
-        <text class="input-hint">例如：我想做一个关于太空探险的游戏</text>
-      </view>
+    <view class="input-section card">
       <textarea
-        class="game-input"
+        class="input-textarea"
         v-model="gameDescription"
-        placeholder="在这里描述你想要的游戏..."
-        :disabled="isGenerating"
+        placeholder="描述你想要的游戏..."
         :maxlength="500"
+        @input="onInputChange"
       />
-      <view class="input-count">
-        <text :class="{ warning: gameDescription.length >= 450 }">
-          {{ gameDescription.length }}/500
-        </text>
-      </view>
-
-      <view class="input-actions-chat">
+      <view class="input-actions flex-between">
         <button
-          class="voice-btn-chat"
-          :class="{ recording: isRecording }"
-          @click="toggleRecording"
-          :disabled="isGenerating"
+          class="voice-btn"
+          @tap="toggleVoice"
+          :class="{ 'recording': isRecording }"
         >
-          {{ isRecording ? '⏹️' : '🎤' }}
+          <text>{{ isRecording ? '⏹️' : '🎤' }}</text>
         </button>
         <button
-          class="generate-btn-chat"
-          @click="generateGame"
-          :disabled="!canGenerate || isGenerating"
+          class="generate-btn btn btn-primary"
+          @tap="generateGame"
+          :disabled="!canGenerate"
+          :class="{ 'btn-disabled': !canGenerate }"
         >
-          {{ isGenerating ? '生成中...' : '生成游戏' }}
+          {{ isEditMode ? '修改' : '生成' }}
         </button>
       </view>
-    </view>
-
-    <!-- 配额提示 -->
-    <view class="quota-section">
-      <text class="quota-text">剩余生成次数：{{ remainingQuota }}</text>
     </view>
 
     <!-- 底部操作按钮 -->
-    <view class="bottom-actions" v-if="generatedGame">
-      <button class="bottom-action-btn" @click="resetGame">
-        <text class="action-icon">🔄</text>
-        <text>重新生成</text>
+    <view class="bottom-actions" v-if="showBottomActions">
+      <button class="action-btn btn btn-default" @tap="testGame">
+        <text class="action-icon">▶️</text>
+        <text>试玩</text>
       </button>
-      <button class="bottom-action-btn" @click="previewGame">
-        <text class="action-icon">👁️</text>
-        <text>预览</text>
-      </button>
-      <button class="bottom-action-btn primary" @click="saveGame">
+      <button class="action-btn btn btn-success" @tap="saveGame">
         <text class="action-icon">💾</text>
         <text>保存</text>
       </button>
@@ -102,402 +86,423 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+import { onLoad } from '@dcloudio/uni-app'
 
-// 状态数据
+// 状态
 const gameDescription = ref('')
 const isGenerating = ref(false)
 const isRecording = ref(false)
-const remainingQuota = ref(5)
+const isEditMode = ref(false)
+const showBottomActions = ref(false)
 const streamLines = ref([])
-const generatedGame = ref(null)
+const scrollTop = ref(0)
+const showCursor = ref(true)
+
+// 预览状态
+const previewStatus = ref('等待生成...')
+const previewTitle = ref('等待生成...')
+const previewBg = ref('linear-gradient(135deg, #E0F7FA 0%, #B2EBF2 100%)')
+const previewHint = ref('描述你的游戏，AI会帮你生成！')
+
+// 当前编辑的游戏ID
+const currentEditGameId = ref(null)
 
 // 计算属性
-const statusText = computed(() => {
-  if (isGenerating.value) return '生成中'
-  if (generatedGame.value) return '已完成'
-  return '等待生成'
-})
-
 const canGenerate = computed(() => {
-  return gameDescription.value.trim().length >= 5 && remainingQuota.value > 0
+  return gameDescription.value.trim().length > 0
 })
 
-// 切换录音
-const toggleRecording = () => {
-  isRecording.value = !isRecording.value
-  if (isRecording.value) {
-    // TODO: 实现语音识别功能
-    uni.showToast({
-      title: '语音识别功能开发中',
-      icon: 'none'
+const statusClass = computed(() => {
+  if (isGenerating.value) return 'status-generating'
+  if (showBottomActions.value) return 'status-success'
+  return 'status-waiting'
+})
+
+// 页面加载
+onLoad((options) => {
+  if (options.id) {
+    // 编辑模式
+    isEditMode.value = true
+    currentEditGameId.value = options.id
+    loadGameData(options.id)
+  }
+})
+
+// 加载游戏数据
+const loadGameData = (id) => {
+  // 模拟加载游戏数据
+  const games = {
+    1: { title: '超级跳跃游戏', description: '控制小球跳跃躲避障碍物' }
+  }
+  const game = games[id]
+  if (game) {
+    gameDescription.value = game.description
+    previewTitle.value = game.title
+    previewHint.value = game.description
+    previewStatus.value = '📝 编辑模式'
+    showBottomActions.value = true
+  }
+}
+
+// 输入变化
+const onInputChange = () => {
+  // 可以在这里做一些实时分析
+}
+
+// 语音录制
+const toggleVoice = () => {
+  if (!isRecording.value) {
+    isRecording.value = true
+    // 开始录音
+    uni.startRecord({
+      success: () => {
+        console.log('录音开始')
+      }
+    })
+  } else {
+    isRecording.value = false
+    // 停止录音
+    uni.stopRecord({
+      success: (res) => {
+        // 模拟语音转文字
+        gameDescription.value += ' 我想做一个跳跃游戏，玩家控制一个小球，点击屏幕就能跳起来，要躲避红色的障碍物。'
+        uni.showToast({ title: '语音识别成功', icon: 'success' })
+      }
     })
   }
 }
 
-// 生成游戏（模拟）
-const generateGame = () => {
-  if (!canGenerate.value || isGenerating.value) return
-
-  isGenerating.value = true
-  streamLines.value = []
-
-  // 模拟流式输出
-  const mockStreamLines = [
-    { text: '> 正在分析游戏需求...', type: 'command' },
-    { text: '> 设计游戏场景和角色', type: 'command' },
-    { text: '> 编写游戏逻辑代码', type: 'command' },
-    { text: '> 添加动画效果', type: 'info' },
-    { text: '> 优化游戏体验', type: 'info' },
-    { text: '✓ 游戏生成完成！', type: 'success' }
-  ]
-
-  let index = 0
-  const addLine = () => {
-    if (index < mockStreamLines.length) {
-      streamLines.value.push(mockStreamLines[index])
-      index++
-      setTimeout(addLine, 500)
-    } else {
-      // 生成完成
-      setTimeout(() => {
-        isGenerating.value = false
-        generatedGame.value = {
-          id: Date.now(),
-          title: '太空冒险',
-          description: gameDescription.value.substring(0, 50),
-          icon: '🚀',
-          content: '<!-- 游戏代码 -->'
-        }
-        remainingQuota.value--
-        uni.showToast({
-          title: '游戏生成成功！',
-          icon: 'success'
-        })
-      }, 500)
-    }
+// AI生成游戏
+const generateGame = async () => {
+  if (!canGenerate.value) {
+    uni.showToast({ title: '请先描述游戏', icon: 'none' })
+    return
   }
 
-  addLine()
+  isGenerating.value = true
+  showBottomActions.value = false
+  previewStatus.value = '⚡ 正在生成...'
+  streamLines.value = []
+
+  // 模拟 AI 生成过程的 stream 输出
+  const messages = isEditMode.value ? [
+    { type: 'command', text: '> ai modify --mode="edit"' },
+    { type: 'info', text: '分析修改需求...' },
+    { type: 'success', text: '✓ 需求分析完成' },
+    { type: 'command', text: '> ai generate --type="game_logic"' },
+    { type: 'code', text: '正在更新游戏逻辑...' },
+    { type: 'info', text: '更新碰撞检测算法' },
+    { type: 'success', text: '✓ 游戏逻辑更新完成' },
+    { type: 'command', text: '> ai build --optimize' },
+    { type: 'success', text: '✅ 游戏修改成功！' }
+  ] : [
+    { type: 'command', text: '> ai create --type="html5_game"' },
+    { type: 'info', text: '初始化游戏项目...' },
+    { type: 'success', text: '✓ 项目初始化完成' },
+    { type: 'command', text: '> ai analyze' },
+    { type: 'info', text: '分析游戏描述...' },
+    { type: 'info', text: '识别游戏类型: 动作游戏' },
+    { type: 'success', text: '✓ 需求分析完成' },
+    { type: 'command', text: '> ai generate --type="game_engine"' },
+    { type: 'code', text: '正在生成游戏引擎...' },
+    { type: 'success', text: '✓ 游戏引擎生成完成' },
+    { type: 'command', text: '> ai generate --type="game_logic"' },
+    { type: 'code', text: '正在生成游戏逻辑...' },
+    { type: 'success', text: '✓ 游戏逻辑生成完成' },
+    { type: 'command', text: '> ai render --type="visuals"' },
+    { type: 'code', text: '正在生成游戏画面...' },
+    { type: 'success', text: '✓ 画面渲染完成' },
+    { type: 'command', text: '> ai build' },
+    { type: 'success', text: '✅ 游戏生成成功！' }
+  ]
+
+  // 逐行显示
+  for (let i = 0; i < messages.length; i++) {
+    await new Promise(resolve => setTimeout(resolve, 300))
+    streamLines.value.push(messages[i])
+    scrollTop.value = 999999
+  }
+
+  // 生成完成
+  await new Promise(resolve => setTimeout(resolve, 500))
+  isGenerating.value = false
+
+  // 更新预览
+  const gameInfo = analyzeDescription(gameDescription.value)
+  previewTitle.value = gameInfo.title
+  previewHint.value = gameInfo.hint
+  previewStatus.value = '✅ 完成'
+  showBottomActions.value = true
+
+  uni.showToast({
+    title: isEditMode.value ? '游戏修改成功！' : '游戏生成成功！',
+    icon: 'success'
+  })
 }
 
-// 预览游戏
-const previewGame = () => {
-  if (!generatedGame.value) return
+// 分析描述
+const analyzeDescription = (desc) => {
+  if (desc.includes('跳跃') || desc.includes('跳')) {
+    return {
+      title: '超级跳跃游戏',
+      hint: '点击屏幕跳跃，躲避障碍物！'
+    }
+  } else if (desc.includes('猜') || desc.includes('数字')) {
+    return {
+      title: '猜数字游戏',
+      hint: '猜猜电脑想的数字是多少！'
+    }
+  } else if (desc.includes('跑') || desc.includes('酷')) {
+    return {
+      title: '跑酷小游戏',
+      hint: '跑得越远越好，加油！'
+    }
+  }
+  return {
+    title: '我的第一个游戏',
+    hint: '开始你的游戏冒险吧！'
+  }
+}
+
+// 试玩游戏
+const testGame = () => {
+  const gameInfo = analyzeDescription(gameDescription.value)
   uni.navigateTo({
-    url: `/pages/play/index?id=${generatedGame.value.id}&title=${generatedGame.value.title}&preview=true`
+    url: `/pages/play/index?title=${gameInfo.title}&preview=true`
   })
 }
 
 // 保存游戏
 const saveGame = () => {
-  if (!generatedGame.value) return
-  uni.showToast({
-    title: '游戏已保存到我的作品',
-    icon: 'success'
+  uni.showModal({
+    title: '保存游戏',
+    content: '确定要将这个游戏保存到"我的作品"吗？',
+    success: (res) => {
+      if (res.confirm) {
+        uni.showToast({ title: '游戏已保存！', icon: 'success' })
+        setTimeout(() => {
+          uni.navigateBack()
+        }, 1500)
+      }
+    }
   })
-  setTimeout(() => {
-    uni.switchTab({
-      url: '/pages/index/index'
-    })
-  }, 1500)
-}
-
-// 重新生成
-const resetGame = () => {
-  generatedGame.value = null
-  streamLines.value = []
-  gameDescription.value = ''
 }
 </script>
 
 <style lang="scss" scoped>
 .page {
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 20px;
-  padding-bottom: 100px;
+  background: $bg-color;
+  padding-bottom: 160rpx;
 }
 
 .preview-section {
-  background: white;
-  border-radius: 15px;
-  padding: 15px;
-  margin-bottom: 15px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  margin: 30rpx;
 }
 
 .preview-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 15px;
+  margin-bottom: 30rpx;
 }
 
 .preview-title {
-  font-size: 16px;
+  font-size: 32rpx;
   font-weight: bold;
-  color: #333;
+  color: $text-primary;
 }
 
 .preview-status {
-  font-size: 12px;
-  color: #999;
-  padding: 4px 10px;
-  background: #f5f5f5;
-  border-radius: 12px;
+  font-size: 24rpx;
+  padding: 8rpx 20rpx;
+  border-radius: 24rpx;
+
+  &.status-waiting {
+    background: $bg-color;
+    color: $text-hint;
+  }
+
+  &.status-generating {
+    background: $warning-color;
+    color: $white;
+  }
+
+  &.status-success {
+    background: $success-color;
+    color: $white;
+  }
 }
 
-.game-thumbnail-preview-large {
+.preview-thumbnail {
   width: 100%;
-  min-height: 200px;
-  background: linear-gradient(135deg, #E0F7FA 0%, #B2EBF2 100%);
-  border-radius: 15px;
+  min-height: 400rpx;
+  border-radius: 30rpx;
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
   overflow: hidden;
-  box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s ease;
+
+  &.generating {
+    background: #1a1a1a;
+    min-height: 500rpx;
+    align-items: flex-start;
+    justify-content: flex-start;
+    padding: 30rpx;
+  }
 }
 
-.game-thumbnail-preview-large.generating {
-  background: #1a1a1a;
-  align-items: flex-start;
-  justify-content: flex-start;
-  padding: 15px;
-}
-
-.game-thumbnail-content {
+.preview-content {
   text-align: center;
+  color: $white;
+  padding: 60rpx 30rpx;
 }
 
-.game-scene-large {
-  font-size: 60px;
-  animation: bounce 1s infinite;
-}
-
-.game-title-large {
-  font-size: 24px;
+.preview-title-large {
+  font-size: 48rpx;
   font-weight: bold;
-  color: #333;
-  margin: 10px 0;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20rpx;
+  text-shadow: 4rpx 4rpx 8rpx rgba(0, 0, 0, 0.3);
 }
 
-.game-hint-large {
-  font-size: 14px;
-  color: #666;
+.preview-icon {
+  font-size: 100rpx;
 }
 
+.preview-hint {
+  font-size: 28rpx;
+  margin-top: 20rpx;
+  opacity: 0.9;
+}
+
+/* Stream 输出样式 */
 .stream-output {
   width: 100%;
-  max-height: 230px;
-  font-family: 'Courier New', monospace;
-  font-size: 13px;
-  line-height: 1.6;
+  height: 100%;
+  max-height: 460rpx;
+  font-family: 'Courier New', Consolas, monospace;
+  font-size: 24rpx;
+  line-height: 1.8;
   color: #00ff00;
-  overflow-y: auto;
   white-space: pre-wrap;
   word-wrap: break-word;
 }
 
 .stream-line {
-  margin-bottom: 5px;
-  animation: fadeInLine 0.3s ease forwards;
-}
+  margin-bottom: 10rpx;
 
-.stream-line.command {
-  color: #00bfff;
-}
+  &.line-command {
+    color: #00bfff;
+  }
 
-.stream-line.success {
-  color: #00ff00;
-}
+  &.line-success {
+    color: #00ff00;
+  }
 
-.stream-line.error {
-  color: #ff4444;
-}
+  &.line-error {
+    color: #ff4444;
+  }
 
-.stream-line.info {
-  color: #ffaa00;
+  &.line-info {
+    color: #ffaa00;
+  }
+
+  &.line-code {
+    color: #aa00ff;
+  }
 }
 
 .cursor {
   display: inline-block;
-  width: 8px;
-  height: 15px;
+  width: 16rpx;
+  height: 30rpx;
   background: #00ff00;
   animation: blink 1s infinite;
-  margin-left: 2px;
-}
-
-@keyframes fadeInLine {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
 }
 
 @keyframes blink {
-  0%, 50% {
-    opacity: 1;
-  }
-  51%, 100% {
-    opacity: 0;
-  }
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
 }
 
-@keyframes bounce {
-  0%, 100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-10px);
-  }
+/* 输入区域 */
+.input-section {
+  margin: 0 30rpx 30rpx;
 }
 
-.input-section-chat {
-  background: white;
-  border-radius: 15px;
-  padding: 12px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.input-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.input-title {
-  font-size: 16px;
-  font-weight: bold;
-  color: #333;
-}
-
-.input-hint {
-  font-size: 12px;
-  color: #999;
-}
-
-.game-input {
+.input-textarea {
   width: 100%;
-  padding: 12px;
-  border: 1px solid #e0e0e0;
-  border-radius: 12px;
-  font-size: 15px;
-  min-height: 80px;
-  resize: none;
+  min-height: 200rpx;
+  padding: 24rpx;
+  border: 2rpx solid $border-color;
+  border-radius: 24rpx;
+  font-size: 30rpx;
+  background: $white;
+  box-sizing: border-box;
+  margin-bottom: 20rpx;
 }
 
-.game-input:focus {
-  outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
+.input-actions {
+  gap: 20rpx;
 }
 
-.input-count {
-  text-align: right;
-  font-size: 12px;
-  color: #999;
-}
-
-.input-count .warning {
-  color: #ff4444;
-}
-
-.input-actions-chat {
+.voice-btn {
+  width: 80rpx;
+  height: 80rpx;
+  background: $bg-color;
+  border: none;
+  border-radius: 16rpx;
+  font-size: 36rpx;
   display: flex;
-  gap: 8px;
   align-items: center;
-}
-
-.voice-btn-chat {
-  background: #f5f5f5;
-  border: none;
-  color: #666;
-  padding: 8px 12px;
-  border-radius: 8px;
-  font-size: 18px;
-  transition: all 0.2s;
+  justify-content: center;
   flex-shrink: 0;
+
+  &.recording {
+    background: #fee;
+    color: #f44;
+    animation: pulse 1s infinite;
+  }
 }
 
-.voice-btn-chat.recording {
-  background: #fee;
-  color: #f44;
-  animation: pulse 1s infinite;
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
 }
 
-.generate-btn-chat {
+.generate-btn {
   flex: 1;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border: none;
-  color: white;
-  padding: 10px 16px;
-  border-radius: 8px;
-  font-size: 15px;
-  font-weight: 500;
-  transition: all 0.2s;
+  padding: 20rpx 32rpx;
+  font-size: 30rpx;
 }
 
-.generate-btn-chat:disabled {
+.btn-disabled {
   opacity: 0.5;
 }
 
-.quota-section {
-  background: rgba(255, 255, 255, 0.9);
-  border-radius: 10px;
-  padding: 10px 15px;
-  margin-top: 15px;
-  text-align: center;
-}
-
-.quota-text {
-  font-size: 13px;
-  color: #666;
-}
-
+/* 底部操作按钮 */
 .bottom-actions {
   position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
-  background: white;
-  padding: 12px 20px;
-  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+  background: $white;
+  padding: 24rpx 30rpx;
+  box-shadow: 0 -4rpx 20rpx rgba(0, 0, 0, 0.1);
   display: flex;
-  gap: 10px;
+  gap: 20rpx;
   z-index: 100;
 }
 
-.bottom-action-btn {
+.action-btn {
   flex: 1;
+  padding: 24rpx;
+  font-size: 30rpx;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 12px 20px;
-  border: none;
-  border-radius: 10px;
-  font-size: 15px;
-  font-weight: 500;
-  background: #f5f5f5;
-  color: #666;
-}
-
-.bottom-action-btn.primary {
-  background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-  color: white;
+  gap: 8rpx;
 }
 
 .action-icon {
-  font-size: 18px;
+  font-size: 36rpx;
 }
 </style>

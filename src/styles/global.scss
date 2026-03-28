@@ -1,338 +1,199 @@
-/* ==================== 全局变量 ==================== */
-/* 主题色 */
-$primary-color: #FF6B6B;
-$primary-gradient: linear-gradient(135deg, #FF6B6B 0%, #FF8E53 100%);
-$secondary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-$success-gradient: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+/* 全局样式变量 */
+$primary-color: #667eea;
+$secondary-color: #764ba2;
+$success-color: #11998e;
+$danger-color: #FF6B6B;
+$warning-color: #f093fb;
 
-/* 文字颜色 */
-$text-primary: #333333;
-$text-secondary: #666666;
-$text-tertiary: #999999;
-$text-white: #ffffff;
+$text-primary: #333;
+$text-secondary: #666;
+$text-hint: #999;
 
-/* 背景色 */
-$bg-primary: #FFFFFF;
-$bg-secondary: #F5F5F5;
-$bg-tertiary: #FAFAFA;
+$bg-color: #f5f5f5;
+$white: #ffffff;
+$border-color: #e0e0e0;
 
-/* 边框色 */
-$border-color: #E0E0E0;
-$border-color-light: #EEEEEE;
-
-/* 阴影 */
-$shadow-sm: 0 2px 10px rgba(0, 0, 0, 0.1);
-$shadow-md: 0 10px 20px rgba(0, 0, 0, 0.2);
-$shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.3);
-
-/* 圆角 */
-$radius-sm: 8px;
-$radius-md: 12px;
-$radius-lg: 15px;
-$radius-xl: 20px;
-
-/* 间距 */
-$spacing-xs: 8px;
-$spacing-sm: 12px;
-$spacing-md: 15px;
-$spacing-lg: 20px;
-$spacing-xl: 30px;
-
-/* 字体大小 */
-$font-xs: 12px;
-$font-sm: 13px;
-$font-base: 15px;
-$font-md: 16px;
-$font-lg: 18px;
-$font-xl: 24px;
-
-/* ==================== 全局样式 ==================== */
+/* 通用样式 */
 page {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
-  background-color: $bg-secondary;
+  background-color: $bg-color;
   color: $text-primary;
-  font-size: $font-base;
-  line-height: 1.5;
+  font-size: 28rpx;
+  line-height: 1.6;
 }
 
-view, text {
-  box-sizing: border-box;
-}
-
-/* ==================== 通用容器 ==================== */
+/* 容器 */
 .container {
-  padding: $spacing-md;
-}
-
-.page {
   min-height: 100vh;
-  background-color: $bg-secondary;
+  background: linear-gradient(135deg, $primary-color 0%, $secondary-color 100%);
 }
 
-/* ==================== 卡片样式 ==================== */
+/* 卡片样式 */
 .card {
-  background: $bg-primary;
-  border-radius: $radius-lg;
-  padding: $spacing-md;
-  margin-bottom: $spacing-md;
-  box-shadow: $shadow-sm;
+  background: $white;
+  border-radius: 30rpx;
+  padding: 30rpx;
+  margin: 20rpx;
+  box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.08);
 }
 
-/* ==================== 按钮样式 ==================== */
+/* 按钮样式 */
 .btn {
-  padding: $spacing-sm $spacing-lg;
-  border-radius: $radius-md;
-  border: none;
-  font-size: $font-base;
+  padding: 24rpx 48rpx;
+  border-radius: 24rpx;
+  font-size: 32rpx;
   font-weight: 500;
-  cursor: pointer;
-  transition: all 0.3s;
   text-align: center;
-}
+  transition: all 0.3s;
+  border: none;
 
-.btn-primary {
-  background: $secondary-gradient;
-  color: $text-white;
-}
-
-.btn-success {
-  background: $success-gradient;
-  color: $text-white;
-}
-
-.btn-secondary {
-  background: $bg-secondary;
-  color: $text-secondary;
-}
-
-.btn-lg {
-  padding: $spacing-lg;
-  font-size: $font-lg;
-  font-weight: bold;
-  border-radius: $radius-lg;
-}
-
-/* ==================== 输入框样式 ==================== */
-.input {
-  width: 100%;
-  padding: $spacing-sm;
-  border: 1px solid $border-color;
-  border-radius: $radius-md;
-  font-size: $font-base;
-  background: $bg-primary;
-}
-
-.input:focus {
-  outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
-}
-
-.textarea {
-  width: 100%;
-  padding: $spacing-sm;
-  border: 1px solid $border-color;
-  border-radius: $radius-md;
-  font-size: $font-base;
-  resize: none;
-  background: $bg-primary;
-}
-
-.textarea:focus {
-  outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
-}
-
-/* ==================== 游戏卡片样式 ==================== */
-.game-card {
-  background: $bg-primary;
-  border-radius: $radius-lg;
-  overflow: hidden;
-  margin-bottom: $spacing-md;
-  box-shadow: $shadow-sm;
-  transition: transform 0.3s, box-shadow 0.3s;
-}
-
-.game-card-thumbnail {
-  width: 100%;
-  height: 120px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 50px;
-  position: relative;
-  background: linear-gradient(135deg, #E0F7FA 0%, #B2EBF2 100%);
-}
-
-.game-card-content {
-  padding: $spacing-md;
-}
-
-.game-card-title {
-  font-size: $font-md;
-  font-weight: bold;
-  color: $text-primary;
-  margin-bottom: $spacing-xs;
-}
-
-.game-card-desc {
-  font-size: $font-sm;
-  color: $text-secondary;
-  margin-bottom: $spacing-sm;
-}
-
-.game-card-stats {
-  display: flex;
-  justify-content: space-between;
-  font-size: $font-xs;
-  color: $text-tertiary;
-}
-
-/* ==================== 加载动画 ==================== */
-@keyframes spin {
-  0% {
-    transform: rotate(0deg);
+  &.btn-primary {
+    background: linear-gradient(135deg, $primary-color 0%, $secondary-color 100%);
+    color: $white;
   }
-  100% {
-    transform: rotate(360deg);
+
+  &.btn-success {
+    background: linear-gradient(135deg, $success-color 0%, #38ef7d 100%);
+    color: $white;
+  }
+
+  &.btn-danger {
+    background: linear-gradient(135deg, $danger-color 0%, #FF8E53 100%);
+    color: $white;
+  }
+
+  &.btn-default {
+    background: $bg-color;
+    color: $text-secondary;
   }
 }
 
-@keyframes pulse {
-  0%, 100% {
-    opacity: 1;
+/* 徽章样式 */
+.badge {
+  display: inline-block;
+  padding: 8rpx 20rpx;
+  border-radius: 24rpx;
+  font-size: 22rpx;
+  font-weight: 500;
+
+  &.badge-success {
+    background: #4CAF50;
+    color: $white;
   }
-  50% {
+
+  &.badge-default {
+    background: #999;
+    color: $white;
+  }
+}
+
+/* 空状态 */
+.empty-state {
+  text-align: center;
+  padding: 120rpx 40rpx;
+  color: $text-hint;
+
+  .empty-icon {
+    font-size: 200rpx;
+    margin-bottom: 40rpx;
     opacity: 0.5;
   }
-}
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
+  .empty-text {
+    font-size: 28rpx;
   }
 }
 
-@keyframes bounce {
-  0%, 100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-10px);
-  }
-}
-
+/* 加载状态 */
 .loading {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: $spacing-xl;
-}
-
-.spinner {
-  width: 40px;
-  height: 40px;
-  border: 4px solid $border-color;
-  border-top-color: $primary-color;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-/* ==================== 空状态 ==================== */
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: $spacing-xl;
-  color: $text-tertiary;
-}
-
-.empty-state-icon {
-  font-size: 60px;
-  margin-bottom: $spacing-md;
-  opacity: 0.5;
-}
-
-.empty-state-text {
-  font-size: $font-base;
-  color: $text-tertiary;
-}
-
-/* ==================== 工具类 ==================== */
-.text-center {
   text-align: center;
-}
-
-.text-primary {
-  color: $text-primary;
-}
-
-.text-secondary {
+  padding: 80rpx;
   color: $text-secondary;
+
+  .loading-spinner {
+    border: 8rpx solid $bg-color;
+    border-top: 8rpx solid $danger-color;
+    border-radius: 50%;
+    width: 80rpx;
+    height: 80rpx;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 40rpx;
+  }
 }
 
-.text-tertiary {
-  color: $text-tertiary;
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
-.mt-sm {
-  margin-top: $spacing-sm;
+/* 渐变背景 */
+.gradient-bg {
+  &.gradient-primary {
+    background: linear-gradient(135deg, $primary-color 0%, $secondary-color 100%);
+  }
+
+  &.gradient-success {
+    background: linear-gradient(135deg, $success-color 0%, #38ef7d 100%);
+  }
+
+  &.gradient-danger {
+    background: linear-gradient(135deg, $danger-color 0%, #FF8E53 100%);
+  }
+
+  &.gradient-warning {
+    background: linear-gradient(135deg, $warning-color 0%, #f5576c 100%);
+  }
 }
 
-.mt-md {
-  margin-top: $spacing-md;
+/* 阴影 */
+.shadow-sm {
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.08);
 }
 
-.mt-lg {
-  margin-top: $spacing-lg;
+.shadow-md {
+  box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.12);
 }
 
-.mb-sm {
-  margin-bottom: $spacing-sm;
+.shadow-lg {
+  box-shadow: 0 16rpx 48rpx rgba(0, 0, 0, 0.16);
 }
 
-.mb-md {
-  margin-bottom: $spacing-md;
+/* 文本样式 */
+.text-primary { color: $text-primary; }
+.text-secondary { color: $text-secondary; }
+.text-hint { color: $text-hint; }
+.text-success { color: $success-color; }
+.text-danger { color: $danger-color; }
+
+.text-bold { font-weight: bold; }
+.text-center { text-align: center; }
+.text-ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.mb-lg {
-  margin-bottom: $spacing-lg;
-}
+/* 间距工具类 */
+.mt-10 { margin-top: 10rpx; }
+.mt-20 { margin-top: 20rpx; }
+.mt-30 { margin-top: 30rpx; }
+.mb-10 { margin-bottom: 10rpx; }
+.mb-20 { margin-bottom: 20rpx; }
+.mb-30 { margin-bottom: 30rpx; }
+.p-20 { padding: 20rpx; }
+.p-30 { padding: 30rpx; }
 
-.flex {
-  display: flex;
-}
-
+/* Flex 布局 */
+.flex { display: flex; }
+.flex-column { flex-direction: column; }
 .flex-center {
   display: flex;
   align-items: center;
   justify-content: center;
 }
-
 .flex-between {
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
-
-.flex-1 {
-  flex: 1;
-}
-
-/* ==================== 响应式 ==================== */
-@media (max-width: 375px) {
-  .game-card-thumbnail {
-    height: 100px;
-  }
-
-  .game-card-title {
-    font-size: $font-base;
-  }
-}
+.flex-1 { flex: 1; }

@@ -1,0 +1,29 @@
+# 依赖
+node_modules/
+package-lock.json
+
+# 构建产物
+dist/
+unpackage/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# 日志
+logs/
+*.log
+
+# 临时文件
+.vite/
+.claude/
+*.tmp
+
+# 环境变量
+.env.local
+.env.*.local

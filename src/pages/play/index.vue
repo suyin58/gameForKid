@@ -1,228 +1,313 @@
 <template>
-  <view class="page">
-    <!-- 顶部信息栏 -->
-    <view class="header-section">
-      <view class="back-btn" @click="goBack">
-        <text class="back-icon">←</text>
+  <view class="play-page">
+    <!-- 头部 -->
+    <view class="play-header gradient-bg gradient-primary">
+      <view class="play-header-left flex">
+        <view class="back-btn" @tap="goBack">
+          <text>←</text>
+        </view>
+        <view class="play-title text-ellipsis">{{ gameTitle }}</view>
       </view>
-      <view class="game-info">
-        <text class="game-title">{{ gameTitle }}</text>
-        <view class="game-stats">
-          <text class="stat-item">
-            <text class="stat-icon">❤️</text>
-            {{ likeCount }}
-          </text>
-          <text class="stat-item">
-            <text class="stat-icon">🎮</text>
-            {{ playCount }}
-          </text>
+      <view class="play-header-right">
+        <view class="share-btn" @tap="shareGame" v-if="showShareBtn">
+          <text>📤</text>
         </view>
       </view>
     </view>
 
-    <!-- 游戏容器 -->
-    <view class="game-container">
-      <web-view v-if="gameUrl" :src="gameUrl" class="game-webview"></web-view>
-
-      <!-- 加载状态 -->
-      <view v-else class="game-placeholder">
-        <view class="loading-spinner"></view>
-        <text class="loading-text">游戏加载中...</text>
+    <!-- 游戏操作区（我的游戏） -->
+    <view class="game-actions" v-if="isMyGame">
+      <view class="actions-inline flex">
+        <button class="action-btn action-btn-primary flex-1" @tap="editGame">
+          <text>✏️ 修改游戏</text>
+        </button>
+        <button class="action-btn action-btn-success flex-1" @tap="togglePublish">
+          <text>{{ game.isPublic ? '🔒 设为私密' : '🌍 发布到广场' }}</text>
+        </button>
       </view>
     </view>
 
-    <!-- 底部操作栏 -->
-    <view class="bottom-bar">
-      <button class="bottom-btn like" @click="toggleLike">
-        <text class="btn-icon">{{ isLiked ? '❤️' : '🤍' }}</text>
-        <text class="btn-text">{{ isLiked ? '已点赞' : '点赞' }}</text>
-      </button>
-      <button class="bottom-btn share" @click="shareGame">
-        <text class="btn-icon">📤</text>
-        <text class="btn-text">分享</text>
-      </button>
-      <button class="bottom-btn clone" @click="cloneGame">
-        <text class="btn-icon">📋</text>
-        <text class="btn-text">克隆</text>
-      </button>
+    <!-- 游戏容器 -->
+    <view class="game-container flex-center flex-column">
+      <!-- 实际游戏会渲染在这里 -->
+      <web-view v-if="gameUrl" :src="gameUrl" class="game-webview"></web-view>
+      <view v-else class="game-placeholder">
+        <text class="placeholder-icon">🎮</text>
+        <text class="placeholder-text">游戏加载中...</text>
+        <text class="placeholder-hint">（实际会显示HTML5游戏）</text>
+      </view>
+    </view>
+
+    <!-- 底部信息栏 -->
+    <view class="play-footer">
+      <view class="game-info-detail flex-1">
+        <text class="info-title text-ellipsis">{{ gameTitle }}</text>
+        <view class="info-meta">
+          <text class="info-author">{{ isMyGame ? '👤 我的作品' : `👤 ${gameAuthor}的作品` }}</text>
+          <text class="info-stats">❤️ {{ likeCount }}  🎮 {{ playCount }}</text>
+        </view>
+      </view>
+
+      <!-- 底部操作按钮（别人的游戏） -->
+      <view class="footer-actions" v-if="!isMyGame">
+        <view
+          class="footer-btn like-btn"
+          :class="{ 'liked': isLiked }"
+          @tap="toggleLike"
+        >
+          <text>{{ isLiked ? '❤️ 已赞' : '🤍 点赞' }}</text>
+        </view>
+        <view class="footer-btn clone-btn" @tap="cloneGame">
+          <text>📋 复制游戏</text>
+        </view>
+      </view>
     </view>
   </view>
 </template>
 
 <script setup>
-import { ref, onLoad } from '@dcloudio/uni-app'
+import { ref, computed } from 'vue'
+import { onLoad } from '@dcloudio/uni-app'
 
-// 页面参数
-const gameId = ref('')
-const gameTitle = ref('游戏试玩')
-const isPreview = ref(false)
-
-// 游戏数据
+// 游戏信息
+const gameId = ref(null)
+const gameTitle = ref('游戏标题')
+const gameAuthor = ref('我')
 const gameUrl = ref('')
+const isMyGame = ref(false)
+const isPublic = ref(false)
+const isLiked = ref(false)
 const likeCount = ref(0)
 const playCount = ref(0)
-const isLiked = ref(false)
+
+// 计算属性
+const showShareBtn = computed(() => {
+  return !isMyGame.value || isPublic.value
+})
+
+const game = computed(() => ({
+  isPublic: isPublic.value
+}))
 
 // 页面加载
 onLoad((options) => {
   if (options.id) {
     gameId.value = options.id
+    loadGameData(options.id)
   }
+
   if (options.title) {
     gameTitle.value = options.title
   }
-  if (options.preview) {
-    isPreview.value = true
+
+  if (options.author) {
+    gameAuthor.value = options.author
+    isMyGame.value = false
+  } else {
+    isMyGame.value = true
   }
 
-  // 加载游戏数据（Mock）
-  loadGameData()
+  if (options.preview) {
+    // 预览模式
+    gameUrl.value = '' // 实际会是生成的游戏 URL
+  }
 })
 
 // 加载游戏数据
-const loadGameData = () => {
-  // TODO: 从 Mock 数据或 API 获取游戏信息
-  // 这里使用模拟数据
-  setTimeout(() => {
-    likeCount.value = Math.floor(Math.random() * 100) + 10
-    playCount.value = Math.floor(Math.random() * 500) + 50
-    isLiked.value = false
+const loadGameData = (id) => {
+  // 模拟游戏数据
+  const games = {
+    1: { title: '超级跳跃游戏', author: '我', isPublic: true, likeCount: 15, playCount: 67 },
+    2: { title: '猜数字游戏', author: '我', isPublic: false, likeCount: 8, playCount: 23 },
+    3: { title: '跑酷小游戏', author: '我', isPublic: false, likeCount: 5, playCount: 12 },
+    4: { title: '接水果游戏', author: '小红', isPublic: true, likeCount: 15, playCount: 67 },
+    5: { title: '记忆力测试', author: '小红', isPublic: true, likeCount: 6, playCount: 18 },
+    6: { title: '跑酷挑战', author: '小刚', isPublic: true, likeCount: 20, playCount: 89 }
+  }
 
-    // 如果是预览模式，使用本地 HTML
-    if (isPreview.value) {
-      gameUrl.value = '/static/demo-game.html'
-    } else {
-      gameUrl.value = '/static/demo-game.html'
-    }
-  }, 500)
-}
-
-// 返回上一页
-const goBack = () => {
-  if (isPreview.value) {
-    uni.navigateBack()
-  } else {
-    uni.switchTab({
-      url: '/pages/plaza/index'
-    })
+  const gameData = games[id]
+  if (gameData) {
+    gameTitle.value = gameData.title
+    gameAuthor.value = gameData.author
+    isPublic.value = gameData.isPublic
+    likeCount.value = gameData.likeCount
+    playCount.value = gameData.playCount
+    isMyGame.value = gameData.author === '我'
   }
 }
 
-// 点赞/取消点赞
-const toggleLike = () => {
-  isLiked.value = !isLiked.value
-  likeCount.value += isLiked.value ? 1 : -1
+// 返回
+const goBack = () => {
+  uni.navigateBack()
+}
 
-  uni.showToast({
-    title: isLiked.value ? '已点赞' : '已取消点赞',
-    icon: 'none'
+// 编辑游戏
+const editGame = () => {
+  uni.redirectTo({
+    url: `/pages/create/index?id=${gameId.value}`
   })
 }
 
-// 分享游戏
-const shareGame = () => {
-  uni.showShareMenu({
-    withShareTicket: true
-  })
-}
-
-// 克隆游戏
-const cloneGame = () => {
+// 发布/私密
+const togglePublish = () => {
+  const action = isPublic.value ? '设为私密' : '发布到广场'
   uni.showModal({
-    title: '克隆游戏',
-    content: '将此游戏克隆到你的作品？',
+    title: `${action}游戏`,
+    content: `确定要${action}吗？`,
     success: (res) => {
       if (res.confirm) {
-        uni.showLoading({ title: '克隆中...' })
-        setTimeout(() => {
-          uni.hideLoading()
-          uni.showToast({
-            title: '克隆成功！',
-            icon: 'success'
-          })
-          setTimeout(() => {
-            uni.switchTab({
-              url: '/pages/index/index'
-            })
-          }, 1500)
-        }, 1000)
+        isPublic.value = !isPublic.value
+        uni.showToast({
+          title: `${action}成功！`,
+          icon: 'success'
+        })
       }
     }
   })
 }
 
-// 查看作者信息
-const viewAuthor = () => {
-  uni.showToast({
-    title: '作者信息功能开发中',
-    icon: 'none'
+// 点赞
+const toggleLike = () => {
+  isLiked.value = !isLiked.value
+  if (isLiked.value) {
+    likeCount.value++
+    uni.showToast({ title: '点赞成功！', icon: 'success' })
+  } else {
+    likeCount.value--
+  }
+}
+
+// 复制游戏
+const cloneGame = () => {
+  uni.showModal({
+    title: '复制游戏',
+    content: '确定要复制这个游戏吗？复制后可以修改和重新发布',
+    success: (res) => {
+      if (res.confirm) {
+        uni.showToast({
+          title: '游戏已复制到"我的作品"！',
+          icon: 'success'
+        })
+        setTimeout(() => {
+          uni.switchTab({
+            url: '/pages/index/index'
+          })
+        }, 1500)
+      }
+    }
+  })
+}
+
+// 分享
+const shareGame = () => {
+  uni.showShareMenu({
+    withShareTicket: true
   })
 }
 </script>
 
 <style lang="scss" scoped>
-.page {
-  min-height: 100vh;
-  background: #f5f5f5;
+.play-page {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: $white;
+  z-index: 9999;
   display: flex;
   flex-direction: column;
 }
 
-.header-section {
-  background: white;
-  padding: 15px 20px;
+.play-header {
+  padding: 24rpx 30rpx;
   display: flex;
   align-items: center;
-  gap: 15px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  justify-content: space-between;
+  color: $white;
+  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.1);
+}
+
+.play-header-left {
+  flex: 1;
+  align-items: center;
+  gap: 20rpx;
+  min-width: 0;
 }
 
 .back-btn {
-  width: 40px;
-  height: 40px;
+  font-size: 56rpx;
+  padding: 16rpx;
+  min-width: 88rpx;
+  min-height: 88rpx;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 24px;
-  color: #333;
+  flex-shrink: 0;
 }
 
-.game-info {
+.play-title {
+  font-size: 36rpx;
+  font-weight: bold;
   flex: 1;
 }
 
-.game-title {
-  display: block;
-  font-size: 18px;
-  font-weight: bold;
-  color: #333;
-  margin-bottom: 5px;
-}
-
-.game-stats {
+.play-header-right {
   display: flex;
-  gap: 15px;
+  gap: 16rpx;
 }
 
-.stat-item {
+.share-btn {
+  width: 80rpx;
+  height: 80rpx;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
   display: flex;
   align-items: center;
-  gap: 4px;
-  font-size: 12px;
-  color: #999;
+  justify-content: center;
+  font-size: 40rpx;
 }
 
-.stat-icon {
-  font-size: 14px;
+/* 游戏操作区 */
+.game-actions {
+  background: $bg-color;
+  padding: 20rpx 30rpx;
+  border-bottom: 1rpx solid $border-color;
 }
 
+.actions-inline {
+  gap: 16rpx;
+  flex-wrap: wrap;
+}
+
+.action-btn {
+  padding: 20rpx 24rpx;
+  border-radius: 20rpx;
+  font-size: 26rpx;
+  font-weight: 500;
+  border: none;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.action-btn-primary {
+  background: rgba(255, 255, 255, 0.95);
+  color: $primary-color;
+  font-weight: 600;
+}
+
+.action-btn-success {
+  background: $success-color;
+  color: $white;
+}
+
+/* 游戏容器 */
 .game-container {
   flex: 1;
-  background: white;
-  margin: 15px;
-  border-radius: 15px;
-  overflow: hidden;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  background: $bg-color;
+  position: relative;
 }
 
 .game-webview {
@@ -231,87 +316,85 @@ const viewAuthor = () => {
 }
 
 .game-placeholder {
-  width: 100%;
-  height: 100%;
+  text-align: center;
+  padding: 80rpx 40rpx;
+}
+
+.placeholder-icon {
+  display: block;
+  font-size: 160rpx;
+  margin-bottom: 40rpx;
+}
+
+.placeholder-text {
+  display: block;
+  font-size: 32rpx;
+  color: $text-secondary;
+  margin-bottom: 20rpx;
+}
+
+.placeholder-hint {
+  display: block;
+  font-size: 24rpx;
+  color: $text-hint;
+}
+
+/* 底部信息栏 */
+.play-footer {
+  background: $white;
+  border-top: 1rpx solid $border-color;
+  padding: 24rpx 30rpx;
   display: flex;
-  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  padding: 60px 20px;
+  gap: 20rpx;
+  box-shadow: 0 -4rpx 20rpx rgba(0, 0, 0, 0.05);
 }
 
-.loading-spinner {
-  width: 50px;
-  height: 50px;
-  border: 4px solid #f3f3f3;
-  border-top: 4px solid #FF6B6B;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin-bottom: 20px;
+.game-info-detail {
+  min-width: 0;
 }
 
-@keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
+.info-title {
+  display: block;
+  font-size: 32rpx;
+  font-weight: bold;
+  color: $text-primary;
+  margin-bottom: 10rpx;
 }
 
-.loading-text {
-  font-size: 14px;
-  color: #999;
-}
-
-.bottom-bar {
-  background: white;
-  padding: 15px 20px;
+.info-meta {
   display: flex;
-  gap: 10px;
-  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+  gap: 30rpx;
+  font-size: 24rpx;
+  color: $text-hint;
+  flex-wrap: wrap;
 }
 
-.bottom-btn {
-  flex: 1;
+.footer-actions {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 5px;
-  padding: 10px;
-  border: none;
-  border-radius: 10px;
-  font-size: 13px;
-  color: white;
-  transition: transform 0.2s;
+  gap: 16rpx;
+  flex-shrink: 0;
 }
 
-.bottom-btn:active {
-  transform: scale(0.95);
+.footer-btn {
+  padding: 20rpx 32rpx;
+  border-radius: 40rpx;
+  font-size: 26rpx;
+  font-weight: 500;
+  flex-shrink: 0;
 }
 
-.bottom-btn.like {
+.like-btn {
   background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  color: $white;
+
+  &.liked {
+    background: #ff6b6b;
+  }
 }
 
-.bottom-btn.like.liked {
-  background: #ff6b6b;
-}
-
-.bottom-btn.share {
-  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-}
-
-.bottom-btn.clone {
-  background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-}
-
-.btn-icon {
-  font-size: 20px;
-}
-
-.btn-text {
-  font-size: 12px;
+.clone-btn {
+  background: linear-gradient(135deg, $success-color 0%, #38ef7d 100%);
+  color: $white;
 }
 </style>

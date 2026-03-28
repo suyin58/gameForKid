@@ -1,93 +1,69 @@
 <template>
   <view class="page">
-    <!-- 顶部搜索栏 -->
-    <view class="search-section">
-      <view class="search-bar">
-        <text class="search-icon">🔍</text>
-        <input
-          class="search-input"
-          v-model="searchKeyword"
-          placeholder="搜索游戏..."
-          @input="handleSearch"
-        />
+    <!-- 头部 -->
+    <view class="header gradient-bg gradient-primary">
+      <view class="header-content">
+        <text class="header-title">🌍 游戏广场</text>
+        <text class="header-subtitle">发现其他小朋友创作的精彩游戏</text>
       </view>
     </view>
 
-    <!-- 分类标签 -->
-    <view class="category-section">
-      <scroll-view class="category-scroll" scroll-x>
-        <view
-          class="category-item"
-          :class="{ active: selectedCategory === item.value }"
-          v-for="item in categories"
-          :key="item.value"
-          @click="selectCategory(item.value)"
-        >
-          {{ item.label }}
-        </view>
-      </scroll-view>
-    </view>
-
     <!-- 排序选项 -->
-    <view class="sort-section">
+    <view class="sort-bar">
       <view
         class="sort-item"
-        :class="{ active: sortBy === item.value }"
         v-for="item in sortOptions"
         :key="item.value"
-        @click="changeSort(item.value)"
+        @tap="changeSort(item.value)"
+        :class="{ active: currentSort === item.value }"
       >
-        {{ item.label }}
+        <text>{{ item.label }}</text>
       </view>
     </view>
 
     <!-- 游戏列表 -->
-    <view class="games-section">
-      <view class="games-list">
-        <view
-          class="game-card"
-          v-for="game in filteredGames"
-          :key="game.id"
-          @click="goToPlay(game)"
-        >
-          <view class="game-card-thumbnail" :style="{ background: game.background }">
-            <text class="game-icon">{{ game.icon }}</text>
-            <view class="play-overlay">
-              <view class="play-button">▶</view>
-            </view>
-            <view class="game-type-badge">{{ game.type }}</view>
+    <view class="game-list">
+      <view
+        class="game-card"
+        v-for="game in filteredGameList"
+        :key="game.id"
+        @tap="playGame(game)"
+        hover-class="game-card-hover"
+      >
+        <!-- 游戏缩略图 -->
+        <view class="game-thumbnail" :style="{ background: game.thumbnailBg }">
+          <text class="game-icon">{{ game.thumbnail }}</text>
+          <view class="play-overlay">
+            <view class="play-button">▶️</view>
           </view>
-          <view class="game-card-content">
-            <view class="game-header">
-              <text class="game-card-title">{{ game.title }}</text>
-              <view class="like-btn" @click.stop="toggleLike(game)">
-                <text :class="{ liked: game.isLiked }">{{ game.isLiked ? '❤️' : '🤍' }}</text>
-                <text class="like-count">{{ game.likes }}</text>
-              </view>
+          <view class="thumbnail-badge">{{ game.type }}</view>
+        </view>
+
+        <!-- 游戏信息 -->
+        <view class="game-info">
+          <text class="game-title">{{ game.title }}</text>
+          <text class="game-desc">{{ game.description }}</text>
+          <view class="game-meta flex-between">
+            <view class="author-info">
+              <text class="author-name">👤 {{ game.author }}</text>
             </view>
-            <text class="game-card-desc">{{ game.description }}</text>
-            <view class="game-card-stats">
-              <text class="stat-item">
-                <text class="stat-icon">👤</text>
-                {{ game.author }}
-              </text>
-              <text class="stat-item">
-                <text class="stat-icon">❤️</text>
-                {{ game.likes }}
-              </text>
-              <text class="stat-item">
-                <text class="stat-icon">🎮</text>
-                {{ game.plays }}
-              </text>
+            <view class="game-stats">
+              <text class="stat-item">❤️ {{ game.likeCount }}</text>
+              <text class="stat-item">🎮 {{ game.playCount }}</text>
             </view>
           </view>
         </view>
       </view>
 
+      <!-- 加载更多 -->
+      <view class="load-more" v-if="hasMore" @tap="loadMore">
+        <text>加载更多</text>
+      </view>
+
       <!-- 空状态 -->
-      <view class="empty-state" v-if="filteredGames.length === 0">
-        <text class="empty-state-icon">🔍</text>
-        <text class="empty-state-text">没有找到相关游戏</text>
+      <view class="empty-state" v-if="filteredGameList.length === 0">
+        <text class="empty-icon">🎮</text>
+        <text class="empty-text">广场上还没有游戏哦~</text>
       </view>
     </view>
   </view>
@@ -96,376 +72,273 @@
 <script setup>
 import { ref, computed } from 'vue'
 
-// 搜索关键词
-const searchKeyword = ref('')
-
-// 选中的分类
-const selectedCategory = ref('all')
-
-// 排序方式
-const sortBy = ref('hot')
-
-// 分类选项
-const categories = [
-  { label: '全部', value: 'all' },
-  { label: '冒险', value: 'adventure' },
-  { label: '益智', value: 'puzzle' },
-  { label: '动作', value: 'action' },
-  { label: '休闲', value: 'casual' },
-  { label: '教育', value: 'education' }
-]
-
 // 排序选项
 const sortOptions = [
-  { label: '最热', value: 'hot' },
-  { label: '最新', value: 'new' },
-  { label: '最多点赞', value: 'likes' }
+  { label: '最新', value: 'newest' },
+  { label: '最热', value: 'hottest' }
 ]
 
-// 游戏列表（Mock 数据）
-const games = ref([
-  {
-    id: 1,
-    title: '太空大冒险',
-    description: '探索神秘宇宙，收集星星能量',
-    icon: '🚀',
-    type: '冒险',
-    typeValue: 'adventure',
-    author: '小明',
-    likes: 128,
-    plays: 456,
-    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-    isLiked: false
-  },
-  {
-    id: 2,
-    title: '数学小天才',
-    description: '趣味数学挑战，让孩子爱上数学',
-    icon: '🔢',
-    type: '教育',
-    typeValue: 'education',
-    author: '王老师',
-    likes: 89,
-    plays: 234,
-    background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-    isLiked: true
-  },
-  {
-    id: 3,
-    title: '水果连连看',
-    description: '经典连连看游戏，锻炼观察力',
-    icon: '🍎',
-    type: '休闲',
-    typeValue: 'casual',
-    author: '小红',
-    likes: 234,
-    plays: 678,
-    background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-    isLiked: false
-  },
+const currentSort = ref('newest')
+
+// 游戏列表
+const gameList = ref([
   {
     id: 4,
-    title: '勇者斗恶龙',
-    description: '经典RPG游戏体验',
-    icon: '⚔️',
-    type: '动作',
-    typeValue: 'action',
+    title: '接水果游戏',
+    description: '用篮子接住掉下来的水果',
+    thumbnail: '🎨',
+    thumbnailBg: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+    author: '小红',
+    type: '休闲',
+    likeCount: 15,
+    playCount: 67,
+    createdAt: Date.now()
+  },
+  {
+    id: 5,
+    title: '记忆力测试',
+    description: '记住卡片位置并匹配',
+    thumbnail: '🧠',
+    thumbnailBg: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+    author: '小红',
+    type: '益智',
+    likeCount: 6,
+    playCount: 18,
+    createdAt: Date.now() - 86400000
+  },
+  {
+    id: 6,
+    title: '跑酷挑战',
+    description: '躲避障碍物跑得更远',
+    thumbnail: '🏃',
+    thumbnailBg: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
     author: '小刚',
-    likes: 156,
-    plays: 345,
-    background: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
-    isLiked: false
+    type: '动作',
+    likeCount: 20,
+    playCount: 89,
+    createdAt: Date.now() - 172800000
+  },
+  {
+    id: 7,
+    title: '猜数字',
+    description: '猜猜电脑想的数字',
+    thumbnail: '🔢',
+    thumbnailBg: 'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)',
+    author: '小明',
+    type: '益智',
+    likeCount: 8,
+    playCount: 34,
+    createdAt: Date.now() - 259200000
   }
 ])
 
-// 过滤和排序后的游戏列表
-const filteredGames = computed(() => {
-  let result = games.value
+const hasMore = ref(false)
 
-  // 分类过滤
-  if (selectedCategory.value !== 'all') {
-    result = result.filter(game => game.typeValue === selectedCategory.value)
+// 排序后的列表
+const filteredGameList = computed(() => {
+  const list = [...gameList.value]
+  if (currentSort.value === 'newest') {
+    return list.sort((a, b) => b.createdAt - a.createdAt)
+  } else {
+    return list.sort((a, b) => b.likeCount - a.likeCount)
   }
-
-  // 搜索过滤
-  if (searchKeyword.value.trim()) {
-    const keyword = searchKeyword.value.toLowerCase()
-    result = result.filter(game =>
-      game.title.toLowerCase().includes(keyword) ||
-      game.description.toLowerCase().includes(keyword) ||
-      game.author.toLowerCase().includes(keyword)
-    )
-  }
-
-  // 排序
-  result = [...result].sort((a, b) => {
-    if (sortBy.value === 'hot') {
-      return b.plays - a.plays
-    } else if (sortBy.value === 'likes') {
-      return b.likes - a.likes
-    } else {
-      return b.id - a.id
-    }
-  })
-
-  return result
 })
 
-// 处理搜索
-const handleSearch = () => {
-  // 搜索逻辑已在 computed 中实现
-}
-
-// 选择分类
-const selectCategory = (value) => {
-  selectedCategory.value = value
-}
-
-// 改变排序
+// 切换排序
 const changeSort = (value) => {
-  sortBy.value = value
+  currentSort.value = value
 }
 
-// 点赞/取消点赞
-const toggleLike = (game) => {
-  game.isLiked = !game.isLiked
-  game.likes += game.isLiked ? 1 : -1
-}
-
-// 跳转到游戏试玩页
-const goToPlay = (game) => {
+// 试玩游戏
+const playGame = (game) => {
   uni.navigateTo({
-    url: `/pages/play/index?id=${game.id}&title=${game.title}`
+    url: `/pages/play/index?id=${game.id}&title=${game.title}&author=${game.author}`
   })
+}
+
+// 加载更多
+const loadMore = () => {
+  uni.showToast({ title: '加载中...', icon: 'loading' })
+  // 实际应用中这里会调用 API
 }
 </script>
 
 <style lang="scss" scoped>
 .page {
   min-height: 100vh;
-  background: #f5f5f5;
-  padding-bottom: 20px;
+  background: $bg-color;
 }
 
-.search-section {
-  background: white;
-  padding: 15px 20px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+.header {
+  padding: 40rpx 30rpx;
+
+  .header-content {
+    text-align: center;
+    color: $white;
+  }
+
+  .header-title {
+    display: block;
+    font-size: 48rpx;
+    font-weight: bold;
+    margin-bottom: 16rpx;
+  }
+
+  .header-subtitle {
+    display: block;
+    font-size: 28rpx;
+    opacity: 0.9;
+  }
 }
 
-.search-bar {
+.sort-bar {
   display: flex;
-  align-items: center;
-  background: #f5f5f5;
-  border-radius: 25px;
-  padding: 10px 15px;
-}
-
-.search-icon {
-  font-size: 18px;
-  margin-right: 10px;
-}
-
-.search-input {
-  flex: 1;
-  border: none;
-  background: transparent;
-  font-size: 15px;
-}
-
-.category-section {
-  background: white;
-  padding: 10px 0;
-  border-bottom: 1px solid #e0e0e0;
-}
-
-.category-scroll {
-  white-space: nowrap;
-}
-
-.category-item {
-  display: inline-block;
-  padding: 8px 16px;
-  margin: 0 5px;
-  border-radius: 20px;
-  font-size: 14px;
-  color: #666;
-  background: #f5f5f5;
-  transition: all 0.3s;
-}
-
-.category-item.active {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-}
-
-.sort-section {
-  display: flex;
-  justify-content: center;
-  gap: 20px;
-  padding: 15px 20px;
+  background: $white;
+  padding: 20rpx 30rpx;
+  gap: 20rpx;
+  border-bottom: 1rpx solid $border-color;
 }
 
 .sort-item {
-  font-size: 14px;
-  color: #666;
-  padding: 5px 10px;
-  border-radius: 15px;
+  flex: 1;
+  text-align: center;
+  padding: 16rpx;
+  font-size: 28rpx;
+  color: $text-secondary;
+  border-radius: 16rpx;
   transition: all 0.3s;
+
+  &.active {
+    background: linear-gradient(135deg, $primary-color 0%, $secondary-color 100%);
+    color: $white;
+    font-weight: bold;
+  }
 }
 
-.sort-item.active {
-  color: #FF6B6B;
-  font-weight: bold;
-}
-
-.games-section {
-  padding: 15px 20px;
-}
-
-.games-list {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
+.game-list {
+  padding: 30rpx;
 }
 
 .game-card {
-  background: white;
-  border-radius: 15px;
+  background: $white;
+  border-radius: 30rpx;
   overflow: hidden;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  margin-bottom: 30rpx;
+  box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.08);
+  transition: all 0.3s;
 }
 
-.game-card-thumbnail {
+.game-card-hover {
+  transform: translateY(-10rpx);
+  box-shadow: 0 20rpx 40rpx rgba(0, 0, 0, 0.15);
+}
+
+.game-thumbnail {
   width: 100%;
-  height: 120px;
+  height: 240rpx;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 50px;
   position: relative;
+
+  .game-icon {
+    font-size: 100rpx;
+  }
+
+  .play-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .play-button {
+    width: 100rpx;
+    height: 100rpx;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 48rpx;
+    box-shadow: 0 8rpx 30rpx rgba(0, 0, 0, 0.3);
+  }
+
+  .thumbnail-badge {
+    position: absolute;
+    top: 20rpx;
+    right: 20rpx;
+    background: rgba(255, 255, 255, 0.9);
+    color: $primary-color;
+    padding: 8rpx 20rpx;
+    border-radius: 24rpx;
+    font-size: 22rpx;
+    font-weight: bold;
+  }
 }
 
-.game-icon {
-  font-size: 60px;
-}
-
-.game-type-badge {
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  background: rgba(255, 255, 255, 0.9);
-  padding: 4px 10px;
-  border-radius: 10px;
-  font-size: 12px;
-  color: #666;
-}
-
-.play-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.3);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0;
-  transition: opacity 0.3s;
-}
-
-.game-card-thumbnail:active .play-overlay {
+.game-card-hover .play-overlay {
   opacity: 1;
 }
 
-.play-button {
-  width: 50px;
-  height: 50px;
-  background: rgba(255, 255, 255, 0.9);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 24px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-  color: #FF6B6B;
+.game-info {
+  padding: 30rpx;
 }
 
-.game-card-content {
-  padding: 15px;
-}
-
-.game-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 8px;
-}
-
-.game-card-title {
-  font-size: 16px;
+.game-title {
+  display: block;
+  font-size: 32rpx;
   font-weight: bold;
-  color: #333;
+  color: $text-primary;
+  margin-bottom: 10rpx;
+}
+
+.game-desc {
+  display: block;
+  font-size: 26rpx;
+  color: $text-secondary;
+  margin-bottom: 20rpx;
+}
+
+.game-meta {
+  margin-top: 20rpx;
+}
+
+.author-info {
   flex: 1;
 }
 
-.like-btn {
+.author-name {
+  font-size: 24rpx;
+  color: $text-hint;
+}
+
+.game-stats {
   display: flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 14px;
-  color: #999;
-}
-
-.like-btn .liked {
-  color: #ff4444;
-}
-
-.like-count {
-  font-size: 12px;
-}
-
-.game-card-desc {
-  display: block;
-  font-size: 13px;
-  color: #666;
-  margin-bottom: 10px;
-}
-
-.game-card-stats {
-  display: flex;
-  gap: 15px;
-  font-size: 12px;
-  color: #999;
+  gap: 20rpx;
+  font-size: 24rpx;
+  color: $text-hint;
 }
 
 .stat-item {
-  display: flex;
-  align-items: center;
-  gap: 4px;
+  flex-shrink: 0;
 }
 
-.stat-icon {
-  font-size: 14px;
-}
+.load-more {
+  text-align: center;
+  padding: 30rpx;
+  color: $primary-color;
+  font-size: 28rpx;
 
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 60px 20px;
-}
-
-.empty-state-icon {
-  font-size: 60px;
-  margin-bottom: 15px;
-  opacity: 0.5;
-}
-
-.empty-state-text {
-  font-size: 16px;
-  color: #666;
+  &:active {
+    opacity: 0.7;
+  }
 }
 </style>
